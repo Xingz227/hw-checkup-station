@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>外设体检站 · 键盘与屏幕一把抓</title>
+<style>
+:root{
+  --bg:#f6f5f4; --panel:#ffffff; --panel2:#fafaf9; --panel3:#f0eeec;
+  --ink:#1a1a1a; --body:#37352f; --muted:#787671; --faint:#a4a097;
+  --hair:#e5e3df; --hair-strong:#c8c4be;
+  --accent:#5645d4; --accent-ink:#ffffff; --accent-soft:#ece9fb;
+  --ok:#1aae39; --warn:#e2854c; --danger:#eb5757;
+  --ring:rgba(86,69,212,.25);
+  --shadow:0 1px 2px rgba(15,15,15,.03), 0 8px 24px -14px rgba(15,15,15,.10);
+  --r-lg:14px; --r-md:10px; --r-sm:8px; --r-pill:999px;
+  --font-head:-apple-system,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--body);
+  font-family:-apple-system,"SF Pro Text","Segoe UI","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.55;padding:24px 16px 48px;
+}
+.wrap{max-width:1060px;margin:0 auto}
+h1,h2,h3{color:var(--ink);font-family:var(--font-head);margin:0;font-weight:600}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+.card{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+
+/* ---------- 顶栏 ---------- */
+.topbar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:20px}
+.brand h1{font-size:28px;letter-spacing:-0.5px;line-height:1.15}
+.brand .sub{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-pill);padding:3px;box-shadow:var(--shadow)}
+.tabs button{padding:7px 18px;border-radius:var(--r-pill);font-size:13.5px;color:var(--muted);transition:all .18s ease;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.tabs .badge{display:inline-block;min-width:16px;height:16px;line-height:16px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;text-align:center;margin-left:5px;padding:0 4px;vertical-align:1px}
+.tabs button.on .badge{background:rgba(255,255,255,.3)}
+
+/* ---------- 通用 ---------- */
+.btn{border-radius:var(--r-pill);padding:7px 15px;font-size:13px;transition:all .18s ease;border:1px solid var(--hair);background:var(--panel);color:var(--body)}
+.btn:hover{border-color:var(--hair-strong)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--danger);border-color:var(--hair)}
+.btn.danger:hover{border-color:var(--danger)}
+.btn.sm{padding:4px 11px;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.muted{color:var(--muted)}
+.faint{color:var(--faint)}
+.small{font-size:12.5px}
+.section-title{font-size:16px;margin:0 0 4px}
+.hint{background:var(--accent-soft);border:1px solid #d9d2f7;border-radius:var(--r-md);padding:10px 14px;font-size:13px;color:#4a3fb0;margin-bottom:16px}
+
+/* ---------- 键盘 ---------- */
+.kb-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-md);padding:9px 12px}
+.stat .k{font-size:11.5px;color:var(--faint);margin-bottom:2px}
+.stat .v{font-size:15px;font-weight:600;color:var(--ink);font-family:var(--font-head)}
+.stat .v small{font-size:11.5px;color:var(--muted);font-weight:400}
+.kb-board{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px 14px;margin-bottom:14px;overflow-x:auto}
+.kb-main{display:flex;gap:14px;min-width:820px}
+.kb-left{flex:1;min-width:0}
+.krow{display:flex;gap:5px;margin-bottom:5px}
+.krow:last-child{margin-bottom:0}
+.key{
+  flex:1 1 0;min-width:0;height:44px;border-radius:var(--r-sm);
+  border:1px solid var(--hair);background:var(--panel2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;color:var(--muted);user-select:none;
+  transition:background-color .05s linear,border-color .05s linear,color .05s linear,transform .05s linear;
+  overflow:hidden;white-space:nowrap;
+}
+.key.wide{font-size:10.5px}
+.key.down{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(1px)}
+.key.tested{border-color:var(--hair-strong);color:var(--body)}
+.key.tested::after{content:"";position:absolute}
+.key.chatter{border-color:var(--danger);color:var(--danger)}
+.key.stuck{border-color:var(--warn);color:var(--warn);background:#fdf3ea}
+.key .dot{width:4px;height:4px;border-radius:50%;background:var(--ok);position:absolute;right:4px;bottom:4px}
+.key{position:relative}
+.frow{display:grid;grid-template-columns:repeat(16,1fr);gap:5px;margin-bottom:5px}
+.numpad{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:44px;gap:5px;flex:0 0 190px}
+.numpad .key{height:auto}
+.np2row{grid-row:span 2}
+.np2col{grid-column:span 2}
+.kb-log{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-md);padding:10px 14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--muted);min-height:76px}
+.kb-log .ev{display:flex;gap:8px;padding:1.5px 0}
+.kb-log .ev b{color:var(--ink);font-weight:600;min-width:74px}
+.kb-log .ev .t{color:var(--faint);margin-left:auto;font-size:11px}
+.kb-log .rep{color:var(--warn)}
+.kb-log .chat{color:var(--danger)}
+
+/* ---------- 屏幕体检 ---------- */
+.pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:12px 0}
+.pat{border:1px solid var(--hair);border-radius:var(--r-md);background:var(--panel);padding:9px 6px 7px;text-align:center;transition:all .15s ease}
+.pat:hover{border-color:var(--hair-strong)}
+.pat .sw{height:30px;border-radius:6px;border:1px solid var(--hair);margin-bottom:6px}
+.pat .nm{font-size:11.5px;color:var(--muted)}
+.marker-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mchip{display:inline-flex;align-items:center;gap:6px;background:#fdeeee;border:1px solid #f5c6c6;color:#b33;border-radius:var(--r-pill);padding:3px 10px;font-size:12px}
+.mchip button{color:#b33;font-size:12px;line-height:1}
+.ufo-wrap{position:relative;border:1px solid var(--hair);border-radius:var(--r-md);overflow:hidden;background:#101014;margin-top:6px}
+.ufo-wrap canvas{display:block;width:100%;height:220px}
+.ufo-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 12px;background:var(--panel2);border-top:1px solid var(--hair)}
+.seg{display:flex;border:1px solid var(--hair);border-radius:var(--r-pill);padding:2.5px;background:var(--panel)}
+.seg button{padding:4px 12px;border-radius:var(--r-pill);font-size:12px;color:var(--muted)}
+.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* ---------- 全屏测试浮层 ---------- */
+#fsOverlay{position:fixed;inset:0;z-index:60;display:none;cursor:crosshair}
+#fsOverlay.show{display:block}
+#fsPattern{position:absolute;inset:0}
+#fsHint{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(20,20,24,.82);color:#fff;font-size:12.5px;backdrop-filter:blur(4px);cursor:default}
+#fsHint .nm{font-weight:600}
+#fsHint .sp{flex:1}
+#fsHint button{color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:var(--r-pill);padding:3px 11px;font-size:12px;background:transparent}
+#fsHint button:hover{background:rgba(255,255,255,.15)}
+#fsCount{background:var(--danger);border-radius:var(--r-pill);padding:2px 9px;font-size:11.5px}
+.dp-mark{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #ff4d4f;transform:translate(-50%,-50%);pointer-events:none;display:flex;align-items:center;justify-content:center;color:#ff4d4f;font-size:11px;font-weight:700;background:rgba(255,77,79,.12);text-shadow:0 0 3px #000}
+.dp-mark::before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px dashed rgba(255,77,79,.6)}
+
+/* ---------- 报告 ---------- */
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.rep-grid{grid-template-columns:1fr}}
+.rep-item{padding:14px 16px}
+.rep-item h3{font-size:14.5px;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.rep-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--hair);font-size:13px}
+.rep-line:first-of-type{border-top:0}
+.rep-line .v{font-weight:600;color:var(--ink);text-align:right}
+.tag{display:inline-block;border-radius:var(--r-pill);padding:1px 9px;font-size:11.5px;font-weight:600}
+.tag.ok{background:#e6f6e9;color:#137a2b}
+.tag.warn{background:#fdf0e4;color:#b35c14}
+.tag.bad{background:#fdecec;color:#c0392b}
+.tag.na{background:var(--panel3);color:var(--muted)}
+.rep-miss{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--muted);word-break:break-all;background:var(--panel2);border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px 10px;margin-top:8px;max-height:110px;overflow:auto}
+
+/* ---------- 首启引导 ---------- */
+#guide{position:fixed;inset:0;z-index:80;background:rgba(30,30,35,.45);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#guide .box{background:var(--panel);border-radius:var(--r-lg);box-shadow:0 24px 60px -12px rgba(0,0,0,.3);max-width:460px;width:100%;padding:26px 26px 22px}
+#guide h2{font-size:19px;margin-bottom:6px}
+#guide .gsub{color:var(--muted);font-size:13px;margin-bottom:16px}
+#guide ol{margin:0 0 20px;padding-left:20px;font-size:13.5px;color:var(--body)}
+#guide ol li{margin-bottom:8px}
+#guide .foot{display:flex;justify-content:space-between;align-items:center}
+.footer{margin-top:26px;text-align:center;color:var(--faint);font-size:12px}
+.footer .v{color:var(--muted)}
+.tabpane{display:none}
+.tabpane.on{display:block;animation:fadein .18s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.note{font-size:12px;color:var(--faint);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= 顶栏 ================= -->
+  <div class="topbar">
+    <div class="brand">
+      <h1>外设体检站</h1>
+      <p class="sub">键盘 · 屏幕，一把抓；体检完，出报告。</p>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-tab="kb" class="on">键盘体检</button>
+      <button data-tab="scr">屏幕体检<span class="badge" id="dpBadge" style="display:none">0</span></button>
+      <button data-tab="rep">体检报告</button>
+    </div>
+  </div>
+
+  <!-- ================= Tab 1：键盘体检 ================= -->
+  <div class="tabpane on" id="pane-kb">
+    <div class="hint">用物理键盘按下任意键开始：按过的键会亮起并计数。可以测试<strong>连击</strong>（快速轻点同一键）、<strong>卡键</strong>（按住时切走窗口再回来）与<strong>无冲</strong>（同时按住尽可能多的键）。触屏设备此页仅作展示。</div>
+
+    <div class="kb-stats">
+      <div class="stat"><div class="k">最近按键</div><div class="v" id="stLast">—</div></div>
+      <div class="stat"><div class="k">当前同时按下</div><div class="v" id="stNow">0 <small>键</small></div></div>
+      <div class="stat"><div class="k">历史最大同时（无冲）</div><div class="v" id="stMax">0 <small>键</small></div></div>
+      <div class="stat"><div class="k">已测试 / 总键位</div><div class="v" id="stCov">0 / 0</div></div>
+      <div class="stat"><div class="k">疑似连击</div><div class="v" id="stChat">0 <small>次</small></div></div>
+      <div class="stat"><div class="k">疑似卡键</div><div class="v" id="stStuck">0 <small>个</small></div></div>
+    </div>
+
+    <div class="kb-board">
+      <div class="kb-main">
+        <div class="kb-left">
+          <div class="frow" id="rowF"></div>
+          <div id="rowsMain"></div>
+        </div>
+        <div class="numpad" id="numpad"></div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn" id="btnStuckCheck">卡键自检（松开所有键后点我）</button>
+      <button class="btn danger" id="btnKbReset">清空键盘记录</button>
+      <span class="small faint" id="kbTip">提示：事件日志实时显示按下 / 松开</span>
+    </div>
+    <div class="kb-log" id="kbLog"><div class="ev"><b>就绪</b><span>等待第一次按键…</span></div></div>
+    <p class="note">说明：浏览器只能收到「当前窗口」的按键事件。卡键判定依据是「按住时切走窗口、回来仍未收到松开信号」；连击判定依据是同一键两次「按下—松开」间隔小于 250ms。两者均为参考指标，最终以手感与换机对比为准。</p>
+  </div>
+
+  <!-- ================= Tab 2：屏幕体检 ================= -->
+  <div class="tabpane" id="pane-scr">
+    <div class="hint">建议在<strong>暗环境</strong>下测试坏点：进入全屏图案后，看到不亮 / 不灭 / 偏色的点，<strong>点它标记</strong>（右上角计数+1）。← → 切换图案，Esc 退出。</div>
+
+    <div class="card" style="padding:16px 18px">
+      <h2 class="section-title">纯色 · 坏点测试</h2>
+      <p class="small muted" style="margin:2px 0 0">白 / 黑 / 三原色 + 间色，各看 10 秒以上。亮点在纯黑下最明显，暗点在纯白下最明显。</p>
+      <div class="pat-grid" id="patSolid"></div>
+    </div>
+
+    <div class="card" style="padding:16px 18px;margin-top:14px">
+      <h2 class="section-title">灰阶 · 渐变 · 网格 · 响应</h2>
+      <p class="small muted" style="margin:2px 0 0">灰阶看色带断层（8-bit 屏常见「色带 Banding」）；网格看摩尔纹与清晰度；UFO 看响应与拖影。</p>
+      <div class="pat-grid" id="patMisc"></div>
+      <div class="ufo-wrap">
+        <canvas id="ufoCanvas" width="960" height="220"></canvas>
+        <div class="ufo-bar">
+          <span class="small muted">UFO 响应测试</span>
+          <div class="seg" id="ufoSpeed">
+            <button data-v="480">480 px/s</button>
+            <button data-v="960" class="on">960 px/s</button>
+            <button data-v="1440">1440 px/s</button>
+          </div>
+          <span class="small faint">盯着飞过的 UFO：轮廓越干净、拖影越短，响应越好</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 18px;margin-top:14px">
+      <h2 class="section-title">已标记的可疑坏点</h2>
+      <div class="marker-list" id="markerList"><span class="small faint">还没有标记。进入全屏图案后点击可疑点即可标记。</span></div>
+      <div class="note" id="dpNote">坏点（永久不亮/不灭的像素）无法通过软件修复；「亮点 / 暗点」多数是工艺极限，不影响使用即无需纠结。数量多或位于屏幕中心，再走售后。</div>
+    </div>
+  </div>
+
+  <!-- ================= Tab 3：体检报告 ================= -->
+  <div class="tabpane" id="pane-rep">
+    <div class="hint">报告根据本机浏览器里的实测记录生成，<strong>数据不上传</strong>，只存在你自己浏览器里。可以复制文本留存或截图分享。</div>
+    <div class="rep-grid">
+      <div class="card rep-item">
+        <h3>⌨️ 键盘体检</h3>
+        <div id="repKb"></div>
+      </div>
+      <div class="card rep-item">
+        <h3>🖥️ 屏幕体检</h3>
+        <div id="repScr"></div>
+      </div>
+    </div>
+    <div class="card rep-item" style="margin-top:14px">
+      <h3>📋 综合结论</h3>
+      <div id="repSum" style="font-size:13.5px"></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" id="btnCopyRep">复制报告文本</button>
+      <button class="btn" id="btnRepRefresh">刷新报告</button>
+      <span class="small faint" id="repTime"></span>
+    </div>
+  </div>
+
+  <p class="footer">外设体检站 v1.0 · 纯前端单文件，零外部请求 · 由 <span class="v">WorkBuddy</span> 协助制作 · #WorkBuddy #1024程序员节</p>
+</div>
+
+<!-- ================= 全屏测试浮层 ================= -->
+<div id="fsOverlay">
+  <div id="fsPattern"></div>
+  <div id="fsHint">
+    <span class="nm" id="fsName">纯黑</span>
+    <span>点击标记可疑坏点</span>
+    <span class="sp"></span>
+    <span id="fsCount">已标记 0</span>
+    <button id="fsPrev">← 上一个</button>
+    <button id="fsNext">下一个 →</button>
+    <button id="fsFull">全屏</button>
+    <button id="fsExit">退出 Esc</button>
+  </div>
+</div>
+
+<!-- ================= 首启引导 ================= -->
+<div id="guide" style="display:none">
+  <div class="box">
+    <h2>欢迎来到外设体检站</h2>
+    <p class="gsub">新键盘、新屏幕、二手配件到手，花三分钟给它做个体检。</p>
+    <ol>
+      <li><strong>键盘体检</strong>：挨个按一遍所有键，顺手试试同时按住一堆键（无冲）、快速轻点同一键（连击）。</li>
+      <li><strong>屏幕体检</strong>：进全屏看纯色图案，暗环境下点掉可疑坏点；再用 UFO 测试看拖影。</li>
+      <li><strong>体检报告</strong>：自动汇总结果，一键复制。数据只存在本机浏览器，不上传。</li>
+    </ol>
+    <div class="foot">
+      <span class="small faint">小提示：键盘测试需要物理键盘</span>
+      <button class="btn primary" id="guideOk">开始体检</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ==================== 工具 ==================== */
+var $ = function(s){ return document.querySelector(s); };
+function storeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function storeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function now(){ return Date.now(); }
+function hhmmss(t){ var d = new Date(t); function p(n){ return (n<10?'0':'')+n; } return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
+
+/* ==================== 键盘布局数据 ==================== */
+/* c = event.code, l = 键帽显示, w = 宽度单位(1u), np = 小键盘区 */
+var ROW_F = [
+  {c:'Escape',l:'Esc',w:1},{c:'F1',l:'F1',w:1},{c:'F2',l:'F2',w:1},{c:'F3',l:'F3',w:1},{c:'F4',l:'F4',w:1},
+  {c:'F5',l:'F5',w:1},{c:'F6',l:'F6',w:1},{c:'F7',l:'F7',w:1},{c:'F8',l:'F8',w:1},{c:'F9',l:'F9',w:1},
+  {c:'F10',l:'F10',w:1},{c:'F11',l:'F11',w:1},{c:'F12',l:'F12',w:1},
+  {c:'PrintScreen',l:'PrtSc',w:1},{c:'ScrollLock',l:'ScrLk',w:1},{c:'Pause',l:'Pause',w:1}
+];
+var ROWS_MAIN = [
+  [ {c:'Backquote',l:'`',w:1},{c:'Digit1',l:'1',w:1},{c:'Digit2',l:'2',w:1},{c:'Digit3',l:'3',w:1},{c:'Digit4',l:'4',w:1},
+    {c:'Digit5',l:'5',w:1},{c:'Digit6',l:'6',w:1},{c:'Digit7',l:'7',w:1},{c:'Digit8',l:'8',w:1},{c:'Digit9',l:'9',w:1},
+    {c:'Digit0',l:'0',w:1},{c:'Minus',l:'-',w:1},{c:'Equal',l:'=',w:1},{c:'Backspace',l:'Backspace',w:2,wide:1},
+    {c:'Insert',l:'Ins',w:1},{c:'Home',l:'Home',w:1},{c:'PageUp',l:'PgUp',w:1} ],
+  [ {c:'Tab',l:'Tab',w:1.5,wide:1},{c:'KeyQ',l:'Q',w:1},{c:'KeyW',l:'W',w:1},{c:'KeyE',l:'E',w:1},{c:'KeyR',l:'R',w:1},
+    {c:'KeyT',l:'T',w:1},{c:'KeyY',l:'Y',w:1},{c:'KeyU',l:'U',w:1},{c:'KeyI',l:'I',w:1},{c:'KeyO',l:'O',w:1},
+    {c:'KeyP',l:'P',w:1},{c:'BracketLeft',l:'[',w:1},{c:'BracketRight',l:']',w:1},{c:'Backslash',l:'\\',w:1.5,wide:1},
+    {c:'Delete',l:'Del',w:1},{c:'End',l:'End',w:1},{c:'PageDown',l:'PgDn',w:1} ],
+  [ {c:'CapsLock',l:'Caps',w:1.75,wide:1},{c:'KeyA',l:'A',w:1},{c:'KeyS',l:'S',w:1},{c:'KeyD',l:'D',w:1},{c:'KeyF',l:'F',w:1},
+    {c:'KeyG',l:'G',w:1},{c:'KeyH',l:'H',w:1},{c:'KeyJ',l:'J',w:1},{c:'KeyK',l:'K',w:1},{c:'KeyL',l:'L',w:1},
+    {c:'Semicolon',l:';',w:1},{c:'Quote',l:"'",w:1},{c:'Enter',l:'Enter',w:2.25,wide:1} ],
+  [ {c:'ShiftLeft',l:'Shift',w:2.25,wide:1},{c:'KeyZ',l:'Z',w:1},{c:'KeyX',l:'X',w:1},{c:'KeyC',l:'C',w:1},{c:'KeyV',l:'V',w:1},
+    {c:'KeyB',l:'B',w:1},{c:'KeyN',l:'N',w:1},{c:'KeyM',l:'M',w:1},{c:'Comma',l:',',w:1},{c:'Period',l:'.',w:1},
+    {c:'Slash',l:'/',w:1},{c:'ShiftRight',l:'Shift',w:2.75,wide:1},
+    {c:'ArrowUp',l:'↑',w:1,nav:1} ],
+  [ {c:'ControlLeft',l:'Ctrl',w:1.25,wide:1},{c:'MetaLeft',l:'Win',w:1.25,wide:1},{c:'AltLeft',l:'Alt',w:1.25,wide:1},
+    {c:'Space',l:'Space',w:6.25,wide:1},
+    {c:'AltRight',l:'Alt',w:1.25,wide:1},{c:'MetaRight',l:'Win',w:1.25,wide:1},{c:'ContextMenu',l:'Menu',w:1.25,wide:1},{c:'ControlRight',l:'Ctrl',w:1.25,wide:1},
+    {c:'ArrowLeft',l:'←',w:1,nav:1},{c:'ArrowDown',l:'↓',w:1,nav:1},{c:'ArrowRight',l:'→',w:1,nav:1} ]
+];
+var ROWS_NP = [
+  [ {c:'NumLock',l:'Num',w:1},{c:'NumpadDivide',l:'/',w:1},{c:'NumpadMultiply',l:'*',w:1},{c:'NumpadSubtract',l:'-',w:1} ],
+  [ {c:'Numpad7',l:'7',w:1},{c:'Numpad8',l:'8',w:1},{c:'Numpad9',l:'9',w:1},{c:'NumpadAdd',l:'+',w:1,cls:'np2row'} ],
+  [ {c:'Numpad4',l:'4',w:1},{c:'Numpad5',l:'5',w:1},{c:'Numpad6',l:'6',w:1} ],
+  [ {c:'Numpad1',l:'1',w:1},{c:'Numpad2',l:'2',w:1},{c:'Numpad3',l:'3',w:1},{c:'NumpadEnter',l:'Enter',w:1,cls:'np2row'} ],
+  [ {c:'Numpad0',l:'0',w:2,cls:'np2col'},{c:'NumpadDecimal',l:'.',w:1} ]
+];
+var CODE_ZH = {
+  Escape:'Esc 退出键',Backquote:'反引号 `',Minus:'减号 -',Equal:'等号 =',Backspace:'退格 Backspace',
+  Tab:'制表 Tab',BracketLeft:'左方括号 [',BracketRight:'右方括号 ]',Backslash:'反斜杠 \\',
+  CapsLock:'大写锁定 CapsLock',Semicolon:'分号 ;',Quote:'单引号 \'',Enter:'回车 Enter',
+  ShiftLeft:'左 Shift',ShiftRight:'右 Shift',Comma:'逗号 ,',Period:'句号 .',Slash:'斜杠 /',
+  ControlLeft:'左 Ctrl',ControlRight:'右 Ctrl',MetaLeft:'左 Win 键',MetaRight:'右 Win 键',
+  AltLeft:'左 Alt',AltRight:'右 Alt',Space:'空格 Space',ContextMenu:'菜单键 Menu',
+  ArrowUp:'上 ↑',ArrowDown:'下 ↓',ArrowLeft:'左 ←',ArrowRight:'右 →',
+  Insert:'插入 Insert',Delete:'删除 Delete',Home:'行首 Home',End:'行尾 End',PageUp:'上翻页 PgUp',PageDown:'下翻页 PgDn',
+  PrintScreen:'截图键 PrtSc',ScrollLock:'滚动锁定 ScrLk',Pause:'暂停键 Pause',
+  NumLock:'小键盘 NumLock',NumpadDivide:'小键盘 /',NumpadMultiply:'小键盘 *',NumpadSubtract:'小键盘 -',
+  NumpadAdd:'小键盘 +',NumpadEnter:'小键盘回车',NumpadDecimal:'小键盘 .'
+};
+
+/* 汇总全部键位 */
+var ALL_KEYS = [];
+ROW_F.forEach(function(k){ ALL_KEYS.push(k); });
+ROWS_MAIN.forEach(function(r){ r.forEach(function(k){ ALL_KEYS.push(k); }); });
+ROWS_NP.forEach(function(r){ r.forEach(function(k){ ALL_KEYS.push(k); }); });
+var TOTAL_KEYS = ALL_KEYS.length;
+var KEY_INDEX = {};
+ALL_KEYS.forEach(function(k){ KEY_INDEX[k.c] = k; });
+
+/* ==================== 键盘状态 ==================== */
+var K = {
+  held: {},          /* code -> true 当前按住 */
+  tested: {},        /* code -> 测试次数 */
+  chatter: {},       /* code -> 连击次数 */
+  stuck: {},         /* code -> true 疑似卡键 */
+  lastUp: {},        /* code -> 上次松开时间 */
+  maxSimul: 0,
+  totalPress: 0,
+  autoRepeat: 0,
+  unknown: 0,
+  startedAt: now(),
+  log: []
+};
+
+/* ---------- 渲染键盘 ---------- */
+function keyEl(k){
+  var d = document.createElement('div');
+  d.className = 'key' + (k.wide ? ' wide' : '');
+  d.dataset.code = k.c;
+  d.style.flexGrow = k.w;
+  if(k.cls) d.classList.add(k.cls);
+  d.textContent = k.l;
+  return d;
+}
+(function renderKb(){
+  var fr = $('#rowF');
+  ROW_F.forEach(function(k){ fr.appendChild(keyEl(k)); });
+  var main = $('#rowsMain');
+  ROWS_MAIN.forEach(function(row){
+    var r = document.createElement('div'); r.className = 'krow';
+    var navs = row.filter(function(k){ return k.nav; });
+    var norms = row.filter(function(k){ return !k.nav; });
+    norms.forEach(function(k){ r.appendChild(keyEl(k)); });
+    if(navs.length){
+      var nav = document.createElement('div');
+      nav.style.cssText = 'margin-left:auto;display:flex;gap:5px;flex:0 0 178px';
+      navs.forEach(function(k){ nav.appendChild(keyEl(k)); });
+      r.appendChild(nav);
+    }
+    main.appendChild(r);
+  });
+  var np = $('#numpad');
+  ROWS_NP.forEach(function(row){ row.forEach(function(k){ np.appendChild(keyEl(k)); }); });
+})();
+
+/* ---------- 日志 ---------- */
+var logBox = $('#kbLog');
+function addLog(html, cls){
+  K.log.unshift({html:html, cls:cls||'', t:now()});
+  if(K.log.length > 40) K.log.pop();
+  var h = '';
+  K.log.slice(0,8).forEach(function(e){
+    h += '<div class="ev '+(e.cls||'')+'"><b>'+e.html+'</b><span></span><span class="t">'+hhmmss(e.t)+'</span></div>';
+  });
+  logBox.innerHTML = h;
+}
+
+/* ---------- 统计刷新 ---------- */
+function refreshStats(){
+  var cov = Object.keys(K.tested).length;
+  $('#stCov').innerHTML = cov + ' <small>/ ' + TOTAL_KEYS + '</small>';
+  $('#stNow').innerHTML = Object.keys(K.held).length + ' <small>键</small>';
+  $('#stMax').innerHTML = K.maxSimul + ' <small>键</small>';
+  $('#stChat').innerHTML = Object.keys(K.chatter).length ? (sumChatter() + ' <small>次</small>') : '0 <small>次</small>';
+  var sn = Object.keys(K.stuck).length;
+  $('#stStuck').innerHTML = sn + ' <small>个</small>';
+}
+function sumChatter(){ var n = 0; for(var c in K.chatter) n += K.chatter[c]; return n; }
+function setLast(code){
+  var k = KEY_INDEX[code];
+  var zh = CODE_ZH[code] || (k ? k.l : '');
+  $('#stLast').innerHTML = esc(k ? k.l : code) + (zh ? ' <small>'+esc(zh)+'</small>' : '');
+}
+
+/* ---------- 核心事件 ---------- */
+function onKeyDown(e){
+  var code = e.code || ('Key'+e.key);
+  try{ e.preventDefault(); }catch(err){}
+  if(e.repeat){ K.autoRepeat++; addLog('重复信号 '+esc(code),'rep'); return; }
+  var k = KEY_INDEX[code];
+  if(!k){ K.unknown++; addLog('未知 '+esc(code)+' key='+esc(e.key||'?')); }
+  else{
+    K.tested[code] = (K.tested[code]||0) + 1;
+    K.totalPress++;
+    /* 连击判定：上次松开后 250ms 内再次按下 */
+    if(K.lastUp[code] && (now() - K.lastUp[code]) < 250){
+      K.chatter[code] = (K.chatter[code]||0) + 1;
+      var el = logBox;
+      addLog('⚑ 疑似连击 '+esc(k.l),'chat');
+      var node = document.querySelector('.key[data-code="'+code+'"]');
+      if(node){ node.classList.add('chatter'); }
+    }
+    var node2 = document.querySelector('.key[data-code="'+code+'"]');
+    if(node2){ node2.classList.add('down','tested'); }
+  }
+  if(!K.held[code]){
+    K.held[code] = true;
+    var n = Object.keys(K.held).length;
+    if(n > K.maxSimul) K.maxSimul = n;
+  }
+  setLast(code);
+  addLog('↓ ' + esc(code) + (k ? '（'+esc(k.l)+'）' : ''));
+  refreshStats();
+}
+function onKeyUp(e){
+  var code = e.code || ('Key'+e.key);
+  try{ e.preventDefault(); }catch(err){}
+  var node = document.querySelector('.key[data-code="'+code+'"]');
+  if(node) node.classList.remove('down');
+  if(K.held[code]){ delete K.held[code]; K.lastUp[code] = now(); }
+  addLog('↑ ' + esc(code));
+  refreshStats();
+}
+window.addEventListener('keydown', onKeyDown, true);
+window.addEventListener('keyup', onKeyUp, true);
+
+/* 切走窗口 / 最小化：仍按住但没收到松开的，判疑似卡键 */
+function stuckCheck(why){
+  var codes = Object.keys(K.held);
+  if(!codes.length) return;
+  codes.forEach(function(code){
+    K.stuck[code] = true;
+    var node = document.querySelector('.key[data-code="'+code+'"]');
+    if(node){ node.classList.remove('down'); node.classList.add('stuck'); }
+  });
+  addLog('⚑ ' + why + '：' + codes.length + ' 个键未收到松开信号','chat');
+  refreshStats();
+}
+window.addEventListener('blur', function(){ stuckCheck('窗口失去焦点'); });
+document.addEventListener('visibilitychange', function(){ if(document.hidden) stuckCheck('页面被隐藏'); });
+
+$('#btnStuckCheck').addEventListener('click', function(){
+  var codes = Object.keys(K.held);
+  if(!codes.length){ $('#kbTip').textContent = '当前没有按住的键 —— 若物理上按着却没亮，可能是卡键或键盘断连'; return; }
+  stuckCheck('手动自检');
+});
+$('#btnKbReset').addEventListener('click', function(){
+  K.held = {}; K.tested = {}; K.chatter = {}; K.stuck = {}; K.lastUp = {};
+  K.maxSimul = 0; K.totalPress = 0; K.autoRepeat = 0; K.unknown = 0; K.log = [];
+  document.querySelectorAll('.key').forEach(function(n){ n.classList.remove('down','tested','chatter','stuck'); });
+  $('#stLast').innerHTML = '—';
+  addLog('记录已清空');
+  refreshStats();
+});
+
+/* ==================== Tab 切换 ==================== */
+var PANES = { kb:$('#pane-kb'), scr:$('#pane-scr'), rep:$('#pane-rep') };
+$('#tabs').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  var t = b.dataset.tab;
+  document.querySelectorAll('#tabs button').forEach(function(x){ x.classList.toggle('on', x === b); });
+  for(var p in PANES) PANES[p].classList.toggle('on', p === t);
+  if(t === 'rep') renderReport();
+  if(t === 'kb') refreshStats();
+});
+
+/* ==================== 屏幕体检 ==================== */
+var PATTERNS = [
+  {id:'black',  name:'纯黑', css:'#000', group:'solid'},
+  {id:'white',  name:'纯白', css:'#fff', group:'solid'},
+  {id:'red',    name:'纯红', css:'#f00', group:'solid'},
+  {id:'green',  name:'纯绿', css:'#0f0', group:'solid'},
+  {id:'blue',   name:'纯蓝', css:'#00f', group:'solid'},
+  {id:'cyan',   name:'青',   css:'#0ff', group:'solid'},
+  {id:'magenta',name:'品红', css:'#f0f', group:'solid'},
+  {id:'yellow', name:'黄',   css:'#ff0', group:'solid'},
+  {id:'gray50', name:'50% 灰', css:'#808080', group:'solid'},
+  {id:'gray32', name:'32 级灰阶', kind:'gray', group:'misc'},
+  {id:'grad',   name:'彩色渐变', kind:'grad', group:'misc'},
+  {id:'grid',   name:'网格 · 清晰度', kind:'grid', group:'misc'},
+  {id:'text',   name:'文字清晰度', kind:'text', group:'misc'},
+  {id:'ufo',    name:'UFO 响应测试', kind:'ufo', group:'misc'}
+];
+var FS = { pattern:null, marks:[], tested:{} };
+
+/* 图案按钮 */
+(function renderPats(){
+  function mk(p, parent){
+    var b = document.createElement('button');
+    b.className = 'pat'; b.dataset.id = p.id;
+    var sw = document.createElement('div'); sw.className = 'sw';
+    if(p.css) sw.style.background = p.css;
+    else if(p.kind === 'gray') sw.style.background = 'linear-gradient(90deg,#000,#fff)';
+    else if(p.kind === 'grad') sw.style.background = 'linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f)';
+    else if(p.kind === 'grid') sw.style.background = 'repeating-linear-gradient(0deg,#fff 0 4px,#000 4px 5px)';
+    else if(p.kind === 'text') sw.style.cssText += 'background:#111;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;';
+    else if(p.kind === 'ufo') sw.style.background = 'linear-gradient(180deg,#1b1b22,#101014)';
+    sw.textContent = p.kind === 'text' ? 'Aa 文字' : '';
+    var nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = p.name;
+    b.appendChild(sw); b.appendChild(nm);
+    b.addEventListener('click', function(){ openFs(p); });
+    parent.appendChild(b);
+  }
+  PATTERNS.forEach(function(p){ mk(p, p.group === 'solid' ? $('#patSolid') : $('#patMisc')); });
+})();
+
+/* 全屏浮层 */
+var fsOverlay = $('#fsOverlay'), fsPattern = $('#fsPattern');
+function paintFs(p){
+  var s = '';
+  if(p.css){ s = 'background:' + p.css; }
+  else if(p.kind === 'gray'){
+    var g = 'linear-gradient(90deg';
+    for(var i = 0; i <= 31; i++){ var v = Math.round(i/31*255); g += ',rgb('+v+','+v+','+v+')'; }
+    g += ')'; s = 'background:' + g;
+  }
+  else if(p.kind === 'grad'){
+    s = 'background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)';
+  }
+  else if(p.kind === 'grid'){
+    s = 'background:#fff;background-image:linear-gradient(rgba(0,0,0,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.55) 1px,transparent 1px);background-size:32px 32px';
+  }
+  else if(p.kind === 'text'){
+    s = 'background:#101014;color:#fff;display:flex;flex-direction:column;justify-content:center;padding:0 8vw;gap:18px;font-family:"PingFang SC","Microsoft YaHei",sans-serif';
+  }
+  else if(p.kind === 'ufo'){
+    s = 'background:#101014';
+  }
+  fsPattern.setAttribute('style', s);
+  if(p.kind === 'text'){
+    var sizes = [12,14,16,20,26,34];
+    var html = '';
+    sizes.forEach(function(px){
+      html += '<div style="font-size:'+px+'px;line-height:1.4">视验屏幕清晰度 · The quick brown fox · 永字八法 · 1234567890</div>';
+    });
+    fsPattern.innerHTML = html;
+  } else {
+    fsPattern.innerHTML = '';
+  }
+}
+function openFs(p){
+  FS.pattern = p;
+  FS.tested[p.id] = true;
+  paintFs(p);
+  $('#fsName').textContent = p.name;
+  updateFsCount();
+  fsOverlay.classList.add('show');
+  if(p.kind === 'ufo') startUfo();
+  document.exitFullscreen && document.exitFullscreen.catch && document.exitFullscreen.catch(function(){});
+}
+function closeFs(){
+  fsOverlay.classList.remove('show');
+  stopUfo();
+  refreshDpBadge();
+  renderMarkers();
+}
+function updateFsCount(){ $('#fsCount').textContent = '已标记 ' + FS.marks.length; }
+function refreshDpBadge(){
+  var b = $('#dpBadge');
+  if(FS.marks.length){ b.style.display = ''; b.textContent = FS.marks.length; }
+  else b.style.display = 'none';
+}
+function renderMarkers(){
+  var box = $('#markerList');
+  if(!FS.marks.length){ box.innerHTML = '<span class="small faint">还没有标记。进入全屏图案后点击可疑点即可标记。</span>'; return; }
+  var h = '';
+  FS.marks.forEach(function(m, i){
+    h += '<span class="mchip">#'+(i+1)+' '+esc(m.pattern)+' · '+m.x+'%, '+m.y+'% <button data-i="'+i+'">×</button></span>';
+  });
+  box.innerHTML = h;
+  box.querySelectorAll('button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      FS.marks.splice(+btn.dataset.i, 1);
+      renderMarkers(); refreshDpBadge(); updateFsCount();
+    });
+  });
+}
+fsPattern.addEventListener('click', function(e){
+  if(!FS.pattern) return;
+  var r = fsPattern.getBoundingClientRect();
+  var x = Math.round((e.clientX - r.left) / r.width * 1000) / 10;
+  var y = Math.round((e.clientY - r.top) / r.height * 1000) / 10;
+  FS.marks.push({x:x, y:y, pattern:FS.pattern.name, t:now()});
+  var d = document.createElement('div');
+  d.className = 'dp-mark'; d.textContent = FS.marks.length;
+  d.style.left = x + '%'; d.style.top = y + '%';
+  fsPattern.appendChild(d);
+  updateFsCount();
+});
+$('#fsExit').addEventListener('click', closeFs);
+$('#fsPrev').addEventListener('click', function(){ stepPat(-1); });
+$('#fsNext').addEventListener('click', function(){ stepPat(1); });
+function stepPat(dir){
+  if(!FS.pattern) return;
+  var i = PATTERNS.indexOf(FS.pattern);
+  var n = PATTERNS[(i + dir + PATTERNS.length) % PATTERNS.length];
+  openFs(n);
+}
+$('#fsFull').addEventListener('click', function(){
+  var el = document.documentElement;
+  if(document.fullscreenElement){ document.exitFullscreen && document.exitFullscreen(); return; }
+  if(el.requestFullscreen) el.requestFullscreen().catch(function(){});
+});
+document.addEventListener('keydown', function(e){
+  if(!fsOverlay.classList.contains('show')) return;
+  if(e.key === 'Escape'){ closeFs(); }
+  else if(e.key === 'ArrowRight'){ stepPat(1); }
+  else if(e.key === 'ArrowLeft'){ stepPat(-1); }
+});
+
+/* ---------- UFO 响应测试 ---------- */
+var ufoRAF = 0, ufoX = 0, ufoDir = 1, ufoSpeed = 960, ufoLast = 0;
+var ufoCanvas = $('#ufoCanvas'), ufoCtx = ufoCanvas.getContext('2d');
+function ufoFrame(ts){
+  if(!ufoLast) ufoLast = ts;
+  var dt = Math.min(50, ts - ufoLast); ufoLast = ts;
+  ufoX += ufoDir * ufoSpeed * dt / 1000;
+  if(ufoX > ufoCanvas.width - 90){ ufoX = ufoCanvas.width - 90; ufoDir = -1; }
+  if(ufoX < 10){ ufoX = 10; ufoDir = 1; }
+  var c = ufoCtx, W = ufoCanvas.width, H = ufoCanvas.height;
+  c.fillStyle = '#101014'; c.fillRect(0,0,W,H);
+  /* 参考标杆 */
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(ufoX, H/2 - 26, 80, 52);
+  /* UFO：碟身 + 舱 + 灯 */
+  c.fillStyle = '#8ec5ff';
+  c.beginPath(); c.ellipse(ufoX+40, H/2 - 4, 40, 12, 0, 0, Math.PI*2); c.fill();
+  c.fillStyle = '#cfe6ff';
+  c.beginPath(); c.arc(ufoX+40, H/2 - 12, 14, Math.PI, 0); c.fill();
+  c.fillStyle = '#fff3b0';
+  for(var i = 0; i < 3; i++){ c.beginPath(); c.arc(ufoX+22+i*18, H/2+6, 3, 0, Math.PI*2); c.fill(); }
+  ufoRAF = requestAnimationFrame(ufoFrame);
+}
+function startUfo(){
+  stopUfo(); ufoLast = 0;
+  /* 同步画布内部分辨率与显示尺寸 */
+  var rect = ufoCanvas.getBoundingClientRect();
+  if(rect.width > 0){ ufoCanvas.width = Math.round(rect.width * (window.devicePixelRatio || 1)); }
+  ufoRAF = requestAnimationFrame(ufoFrame);
+}
+function stopUfo(){ if(ufoRAF){ cancelAnimationFrame(ufoRAF); ufoRAF = 0; } }
+$('#ufoSpeed').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  ufoSpeed = +b.dataset.v;
+  document.querySelectorAll('#ufoSpeed button').forEach(function(x){ x.classList.toggle('on', x === b); });
+});
+/* 页面不可见时暂停，省电 */
+document.addEventListener('visibilitychange', function(){ if(document.hidden) stopUfo(); });
+
+/* ==================== 体检报告 ==================== */
+function kbVerdict(){
+  var cov = Object.keys(K.tested).length;
+  var ratio = cov / TOTAL_KEYS;
+  var stuckN = Object.keys(K.stuck).length;
+  var chatN = sumChatter();
+  if(cov === 0) return {tag:'na', text:'未测试'};
+  if(stuckN > 0) return {tag:'bad', text:'检出疑似卡键 ' + stuckN + ' 个'};
+  if(chatN > 0) return {tag:'warn', text:'检出疑似连击 ' + chatN + ' 次'};
+  if(ratio < 0.9) return {tag:'warn', text:'覆盖不足（' + Math.round(ratio*100) + '%），建议按完所有键'};
+  return {tag:'ok', text:'状态良好'};
+}
+function scrVerdict(){
+  var n = FS.marks.length;
+  if(n === 0) return {tag:'na', text:'未标记坏点'};
+  if(n <= 2) return {tag:'warn', text:'可疑点 ' + n + ' 个（工艺极限内）'};
+  return {tag:'bad', text:'可疑点 ' + n + ' 个，建议走售后'};
+}
+function renderReport(){
+  var cov = Object.keys(K.tested).length;
+  var miss = ALL_KEYS.filter(function(k){ return !K.tested[k.c]; }).map(function(k){ return k.l; });
+  var kv = kbVerdict();
+  var dur = Math.round((now() - K.startedAt) / 1000);
+  var mins = Math.floor(dur/60), secs = dur % 60;
+  var pats = Object.keys(FS.tested).map(function(id){
+    var p = PATTERNS.filter(function(x){ return x.id === id; })[0];
+    return p ? p.name : id;
+  });
+  $('#repKb').innerHTML =
+    line('按键覆盖', cov + ' / ' + TOTAL_KEYS + '（' + Math.round(cov/TOTAL_KEYS*100) + '%）') +
+    line('最大同时响应', K.maxSimul + ' 键') +
+    line('总按键次数', K.totalPress + ' 次') +
+    line('疑似连击', sumChatter() + ' 次') +
+    line('疑似卡键', Object.keys(K.stuck).length + ' 个') +
+    line('测试时长', mins + ' 分 ' + secs + ' 秒') +
+    (miss.length ? '<div class="rep-miss">未测到的键：' + esc(miss.join('、')) + '</div>' : '');
+  $('#repScr').innerHTML =
+    line('已测图案', pats.length ? pats.join('、') : '—') +
+    line('标记坏点', FS.marks.length + ' 个') +
+    (FS.marks.length ? '<div class="rep-miss">' + FS.marks.map(function(m,i){
+      return '#'+(i+1)+' '+esc(m.pattern)+'（'+m.x+'%, '+m.y+'%）';
+    }).join('<br>') + '</div>' : '');
+  var sv = scrVerdict();
+  $('#repSum').innerHTML =
+    '<p style="margin:0 0 10px">键盘：<span class="tag '+kv.tag+'">'+esc(kv.text)+'</span> ' +
+    '&nbsp; 屏幕：<span class="tag '+sv.tag+'">'+esc(sv.text)+'</span></p>' +
+    '<p class="small muted" style="margin:0">报告生成于 ' + hhmmss(now()) + '。数据仅存储于本机浏览器（localStorage 之外的会话内存），刷新页面后键盘记录清零，坏点标记保留。</p>';
+  $('#repTime').textContent = '生成时间 ' + hhmmss(now());
+}
+function line(k, v){ return '<div class="rep-line"><span>'+esc(k)+'</span><span class="v">'+esc(v)+'</span></div>'; }
+$('#btnRepRefresh').addEventListener('click', renderReport);
+$('#btnCopyRep').addEventListener('click', function(){
+  renderReport();
+  var cov = Object.keys(K.tested).length;
+  var miss = ALL_KEYS.filter(function(k){ return !K.tested[k.c]; }).map(function(k){ return k.l; });
+  var txt = [];
+  txt.push('【外设体检站 · 体检报告】');
+  txt.push('生成时间：' + hhmmss(now()));
+  txt.push('');
+  txt.push('— 键盘 —');
+  txt.push('按键覆盖：' + cov + '/' + TOTAL_KEYS);
+  txt.push('最大同时响应：' + K.maxSimul + ' 键');
+  txt.push('总按键次数：' + K.totalPress);
+  txt.push('疑似连击：' + sumChatter() + ' 次');
+  txt.push('疑似卡键：' + Object.keys(K.stuck).length + ' 个');
+  if(miss.length) txt.push('未测到的键：' + miss.join('、'));
+  txt.push('');
+  txt.push('— 屏幕 —');
+  txt.push('已测图案：' + (Object.keys(FS.tested).map(function(id){
+    var p = PATTERNS.filter(function(x){ return x.id === id; })[0]; return p ? p.name : id;
+  }).join('、') || '—'));
+  txt.push('标记坏点：' + FS.marks.length + ' 个');
+  FS.marks.forEach(function(m,i){ txt.push('  #'+(i+1)+' '+m.pattern+'（'+m.x+'%, '+m.y+'%）'); });
+  txt.push('');
+  txt.push('结论：键盘 ' + kbVerdict().text + '；屏幕 ' + scrVerdict().text);
+  txt.push('（由「外设体检站」生成 · WorkBuddy #1024程序员节）');
+  var s = txt.join('\n');
+  function done(){ $('#btnCopyRep').textContent = '已复制 ✓'; setTimeout(function(){ $('#btnCopyRep').textContent = '复制报告文本'; }, 1600); }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(s).then(done, function(){ fallbackCopy(s); done(); });
+  } else { fallbackCopy(s); done(); }
+});
+function fallbackCopy(s){
+  var ta = document.createElement('textarea');
+  ta.value = s; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+/* ==================== 首启引导 ==================== */
+if(!storeGet('hwcheck.seen')){
+  $('#guide').style.display = 'flex';
+}
+$('#guideOk').addEventListener('click', function(){
+  $('#guide').style.display = 'none';
+  storeSet('hwcheck.seen', '1');
+});
+
+/* 初始刷新 */
+refreshStats();
+renderMarkers();
+})();
+</script>
+</body>
+</html>
